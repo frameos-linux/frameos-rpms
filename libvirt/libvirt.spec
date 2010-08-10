@@ -60,22 +60,22 @@
 # Finally set the OS / architecture specific special cases
 
 # RHEL doesn't ship OpenVZ, VBox, UML, OpenNebula, PowerHypervisor or ESX
-%if 0%{?rhel}
+#%if 0%{?rhel}
 %define with_openvz 0
 %define with_vbox 0
 %define with_uml 0
 %define with_one 0
 %define with_phyp 0
 %define with_esx 0
-%endif
+#%endif
 
 # RHEL-5 has restricted QEMU to x86_64 only and is too old for LXC
-%if 0%{?rhel} == 5
+#%if 0%{?rhel} == 5
 %ifnarch x86_64
 %define with_qemu 0
 %endif
 %define with_lxc 0
-%endif
+#%endif
 
 # RHEL-6 has restricted QEMU to x86_64 only, stopped including Xen
 # on all archs. Other archs all have LXC available though
@@ -145,10 +145,11 @@ Summary: Library providing a simple API virtualization
 Name: libvirt
 Version: 0.8.3
 #Release: 1%{?dist}%{?extra_release}
-Release: 1frameos
+Release: 3frameos
 License: LGPLv2+
 Group: Development/Libraries
 Source: http://libvirt.org/sources/libvirt-%{version}.tar.gz
+Source1: disable-nf-bridge.conf
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 URL: http://libvirt.org/
 BuildRequires: python-devel
@@ -420,9 +421,9 @@ of recent versions of Linux (and other OSes).
 %define _without_one --without-one
 %endif
 
-%if %{with_rhel5}
+#%if %{with_rhel5}
 %define _with_rhel5_api --with-rhel5-api
-%endif
+#%endif
 
 %if ! %{with_network}
 %define _without_network --without-network
@@ -563,7 +564,12 @@ rm -rf $RPM_BUILD_ROOT%{_sysconfdir}/libvirt/lxc.conf
 
 %if %{with_libvirtd}
 chmod 0644 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/libvirtd
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/
+install -m 644 $RPM_SOURCE_DIR/disable-nf-bridge.conf \
+   $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/disable-nf-bridge.conf
 %endif
+
+
 
 %clean
 rm -fr %{buildroot}
@@ -629,6 +635,7 @@ fi
 %dir %attr(0700, root, root) %{_sysconfdir}/libvirt/qemu/networks/autostart
 %endif
 
+%{_sysconfdir}/modprobe.d/disable-nf-bridge.conf
 %{_sysconfdir}/rc.d/init.d/libvirtd
 %{_sysconfdir}/rc.d/init.d/libvirt-guests
 %config(noreplace) %{_sysconfdir}/sysconfig/libvirtd
@@ -721,6 +728,7 @@ fi
 %{_mandir}/man8/libvirtd.8.gz
 %endif
 
+
 %files client -f %{name}.lang
 %defattr(-, root, root)
 %doc AUTHORS ChangeLog.gz NEWS README COPYING.LIB TODO
@@ -789,6 +797,13 @@ fi
 %endif
 
 %changelog
+* Mon Aug 10 2010 Sergio Rubio <sergio@rubio.name> - 0.8.3-3frameos
+- add modprobe.d disable-nf-bridge.conf script
+
+* Mon Aug 10 2010 Sergio Rubio <sergio@rubio.name> - 0.8.3-2frameos
+- use --with-rhel5-api
+- usec --without-lxc
+
 * Mon Aug 10 2010 Sergio Rubio <sergio@rubio.name> - 0.8.3-1frameos
 - updated to upstream 0.8.3
 
